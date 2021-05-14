@@ -128,12 +128,9 @@ const useTracks = () => {
               deviceId =>
                   console.log(
                       `track audio output device was changed to ${deviceId}`));
-
           const id = participant + track.getType();
           track.ourID = id;
-
         })
-
          */
         return tracks;
 

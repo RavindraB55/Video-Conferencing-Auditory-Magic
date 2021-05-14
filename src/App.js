@@ -1,14 +1,12 @@
 /*global
   $, JitsiMeetJS, config */
-import React, { setState, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import './App.css';
 import $ from 'jquery';
 import { Seat } from './components/Seat';
 import { ConnectForm } from './components/ConnectForm';
-import { Audio2 } from './components/Audio';
 import useWindowSize from './hooks/useWindowSize';
-import qs from 'qs'
-
+import qs from 'qs';
 window.$  = $
 
 // Stage 3
@@ -66,10 +64,7 @@ const loadAndConnect = ({ domain, room}) => {
     const script = document.createElement('script')
     script.onload = () => {
       JitsiMeetJS.init();
-      console.log("---------------------------------------")
-      console.log("Testing to see if the init was successful")
-      console.log("---------------------------------------")
-
+      console.log("hello world")
       const configScript = document.createElement('script')
       //configScript.src = `https://199.98.27.14/etc/jitsi/meet/199.98.27.14-config.js`;
       configScript.src = `https://micro13.ee.cooper.edu/testing-config.js`;
@@ -79,6 +74,8 @@ const loadAndConnect = ({ domain, room}) => {
 
       //configScript.src = `https://199.98.27.14/etc/jitsi/meet/external_api.js`;
       document.querySelector('head').appendChild(configScript);
+
+
 
       configScript.onload = () => {
         console.log("This is config var")
@@ -90,45 +87,20 @@ const loadAndConnect = ({ domain, room}) => {
     console.log("Didn't reach this point")
     //script.src = `https://199.98.27.14/home/msenior13/SeniorProj2020/lib-jitsi-meet/lib-jitsi-meet.min.js`;
     script.src = `https://meet.jit.si/libs/lib-jitsi-meet.min.js`;
-    console.log(script)
+    console.log(script.src)
     document.querySelector('head').appendChild(script);
   })
 }
 
-// Define, add, and remove tracks
 const useTracks = () => {
   const [tracks, setTracks] = useState([])
 
   const addTrack = useCallback((track) => {
+
     setTracks((tracks) => {
       const hasTrack = tracks.find(_track => track.getId() === _track.getId())
 
-      if(hasTrack)
-        // Added everything before the return tracks
-        /*
-        tracks.forEach(track => {
-          const participant = track.getParticipantId();
-          track.addEventListener(
-              JitsiMeetJS.events.track.TRACK_AUDIO_LEVEL_CHANGED,
-              audioLevel => console.log(`Audio Level remote: ${audioLevel}`));
-          track.addEventListener(
-              JitsiMeetJS.events.track.TRACK_MUTE_CHANGED,
-              () => console.log('remote track muted'));
-          track.addEventListener(
-              JitsiMeetJS.events.track.LOCAL_TRACK_STOPPED,
-              () => console.log('remote track stoped'));
-          track.addEventListener(JitsiMeetJS.events.track.TRACK_AUDIO_OUTPUT_CHANGED,
-              deviceId =>
-                  console.log(
-                      `track audio output device was changed to ${deviceId}`));
-
-          const id = participant + track.getType();
-          track.ourID = id;
-
-        })
-
-         */
-        return tracks;
+      if(hasTrack) return tracks;
 
       return [...tracks, track]
 
@@ -149,9 +121,20 @@ const getDefaultParamsValue = () => {
     room: params.room ?? 'daily_standup',
     domain: params.domain ?? '199.98.27.14',
 
-    autoJoin: params.autojoin ?? false,
+    autoJoin: params.autojoin ?? true,
   }
 }
+
+const remoteTracks = {};
+
+/**
+ * Handles remote tracks
+ * @param track JitsiTrack object
+ */
+/*function onRemoteTrack(track) {
+
+}*/
+
 
 function App() {
 
@@ -161,32 +144,17 @@ function App() {
   // console.log(defaultParams)
 
   const [mainState, setMainState] = useState('init')
-  console.log(mainState)
-  console.log(setMainState)
   const [domain, setDomain] = useState(defaultParams.domain)
   const [room, setRoom] = useState(defaultParams.room)
   const [conference, setConference] = useState(null)
-
-  // Track Functionality
   const [videoTracks, addVideoTrack, removeVideoTrack] = useTracks();
   const [audioTracks, addAudioTrack, removeAudioTrack] = useTracks();
-
-  const [count, setCount] = useState(0);
 
   const addTrack = useCallback((track) => {
     if(track.getType() === 'video') addVideoTrack(track)
     if(track.getType() === 'audio') addAudioTrack(track)
-  }, [ addVideoTrack, addAudioTrack ])
 
-  var toggleCamera = (isTurnedOff) => {
-    if (isTurnedOff) {
-      //videoTracks[0].mute();
-      //videoTracks[0].track.mute();
-    } else {
-      videoTracks[0].unmute();
-      //videoTracks[0].track.unmute();
-    }
-  };
+  }, [ addVideoTrack, addAudioTrack ])
 
   const removeTrack = useCallback((track) => {
     if(track.getType() === 'video') removeVideoTrack(track)
@@ -216,49 +184,36 @@ function App() {
     }
   }, [connect, defaultParams.autoJoin])
 
-    return (
-        <div className="App">
-          <header className="App-header">
-            {mainState === 'init' &&
-            <ConnectForm connect={connect} domain={domain} room={room} setRoom={setRoom} setDomain={setDomain}/>}
-            {mainState === 'loading' && 'Loading'}
-            {mainState === 'started' &&
-            //<div>Hello World</div>
-            <div style={{
-              height: '100vh', width: '100vw', maxHeight: '100vw', maxWidth: '100vh',
-              background: 'rgba(0, 100,100, 1)',
-              position: 'relative',
-              borderRadius: '100%'
-            }}>
-              {
-                videoTracks.map((track, index) => <Seat track={track} index={index} length={videoTracks.length}
-                                                        key={track.getId()}/>)
-              }
-              {
-                audioTracks.map(
-                    (track, index) => {
-                      console.log(track.getType());
-                      return <Audio2 track={track} index={index} key={track.getId()} ourID={track.ourID}/>
-                      }
-                    )
-              }
 
 
-            </div>}
 
-          </header>
-          <div>Hello World</div>
-          <button onClick={() => toggleCamera(videoTracks[0].isMuted())}>
-            Click me
-          </button>
-          <div>
-            <p>You clicked {count} times</p>
-            <button onClick={() => setCount(count + 1)}>
-              Click me
-            </button>
-          </div>
-        </div>
-    );
+  return (
+      <div className="App">
+        <header className="App-header">
+          { mainState === 'init' && <ConnectForm connect={connect} domain={domain} room={room} setRoom={setRoom} setDomain={setDomain} /> }
+          { mainState === 'loading' && 'Loading' }
+          { mainState === 'started' &&
+          <div style={{
+            height: '100vh', width: '100vw', maxHeight: '100vw', maxWidth: 'calc(100% - 50px)',
+            background: 'rgba(0, 100,100, 1)',
+            position: 'relative',
+            borderRadius: '30px'
+          }}>
+
+            {
+              videoTracks.map((track, index) =>  {
+                return(
+                <Seat track={track} index={index} length={videoTracks.length} key={track.getId()} audioTrack={audioTracks[index]} />
+              );})
+
+            }
+
+          </div>}
+
+        </header>
+
+      </div>
+  );
 }
 
 export default App;
